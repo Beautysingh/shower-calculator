@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shower Glass Price Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Light gray background */
+        }
+        /* Custom scrollbar for better aesthetics */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #e0e0e0;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        /* Hide number input arrows for a cleaner look */
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"] {
+            -moz-appearance: textfield; /* Firefox */
+        }
+        /* Canvas styling for responsiveness */
+        canvas {
+            display: block; /* Remove extra space below canvas */
+            background-color: #f0f0f0; /* Light background for canvas */
+            border-radius: 0.5rem; /* Rounded corners */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+            max-width: 100%; /* Ensure it fits container */
+            height: auto; /* Maintain aspect ratio */
+        }
+        /* Validation error class */
+        .input-error {
+            border-color: #ef4444 !important; /* Red border */
+            box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.5); /* Red glow */
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-6 md:p-8 lg:p-10 bg-gray-100 min-h-screen flex items-center justify-center">
+    <div class="container mx-auto max-w-4xl bg-white shadow-xl rounded-xl p-6 sm:p-8 md:p-10 border border-gray-200">
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-center text-gray-800 mb-8">
+            Shower Glass Price Calculator
+        </h1>
+
+        <div class="mb-8 p-6 bg-blue-50 rounded-lg border border-blue-200 shadow-sm">
+            <h2 class="text-2xl font-semibold text-blue-700 mb-4">Your Details</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <label for="customerName" class="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                    <input type="text" id="customerName" class="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out" placeholder="Your Name">
+                </div>
+                <div>
+                    <label for="customerCity" class="block text-sm font-medium text-gray-700 mb-1">City</label>
+                    <input type="text" id="customerCity" class="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out" placeholder="Your City">
+                </div>
+                <div>
+                    <label for="customerPhone" class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                    <input
+                        type="tel"
+                        id="customerPhone"
+                        class="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
+                        placeholder="+254 7XX XXX XXX"
+                        oninput="this.value = this.value.replace(/[^0-9+]/g, '');"
+                        pattern="[0-9+]{10,15}"
+                        inputmode="numeric"
+                    >
+                    <p id="phoneError" class="text-xs text-red-600 mt-1 hidden">Please enter a valid Kenyan phone number.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <div class="p-6 bg-gray-50 rounded-lg border border-gray-200 shadow-sm">
+                <h2 class="text-2xl font-semibold text-gray-700 mb-4">Dimensions & Type</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+                    <div>
+                        <label for="height" class="block text-sm font-medium text-gray-700 mb-1">Height</label>
+                        <div class="flex items-center">
+                            <input type="number" id="height" min="0.1" step="0.01" class="w-full p-3 border border-gray-300 rounded-l-md shadow-sm focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out" placeholder="e.g., 2.1">
+                            <select id="heightUnit" class="p-3 border border-gray-300 rounded-r-md bg-gray-100 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out flex-shrink-0 w-24">
+                                <option value="m">Meters</option>
+                                <option value="cm">CM</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="width" class="block text-sm font-medium text-gray-700 mb-1">Width</label>
+                        <div class="flex items-center">
+                            <input type="number" id="width" min="0.1" step="0.01" class="w-full p-3 border border-gray-300 rounded-l-md shadow-sm focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out" placeholder="e.g., 1.5">
+                            <select id="widthUnit" class="p-3 border border-gray-300 rounded-r-md bg-gray-100 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out flex-shrink-0 w-24">
+                                <option value="m">Meters</option>
+                                <option value="cm">CM</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <label for="showerType" class="block text-sm font-medium text-gray-700 mb-1">Shower Type</label>
+                    <select id="showerType" class="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm bg-white focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out">
+                        <option value="frontal">Frontal (Wall-to-Wall)</option>
+                        <option value="corner">Corner</option>
+                        <option value="cnc">CNC Cut</option>
+                        <option value="sliding">Sliding Door</option>
+                        <option value="bathtubPartial">Bathtub Screen (Partial)</option>
+                        <option value="bathtubFull">Bathtub Full Closure</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="showerModel" class="block text-sm font-medium text-gray-700 mb-1">Model (Sub-category)</label>
+                    <select id="showerModel" class="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm bg-white focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out">
+                        <option value="">Select a Model (Placeholder)</option>
+                        <option value="modelA">Model A</option>
+                        <option value="modelB">Model B</option>
+                        <option value="modelC">Model C</option>
+                    </select>
+                    <p class="text-xs text-gray-500 mt-1">Note: Specific models would be dynamically loaded based on Shower Type in a full application.</p>
+                </div>
+            </div>
+
+            <div class="p-6 bg-gray-50 rounded-lg border border-gray-200 shadow-sm">
+                <h2 class="text-2xl font-semibold text-gray-700 mb-4">Glass & Hardware</h2>
+                <div class="mb-6">
+                    <label for="glassType" class="block text-sm font-medium text-gray-700 mb-1">Glass Type</label>
+                    <select id="glassType" class="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm bg-white focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out">
+                        <option value="clear">Clear</option>
+                        <option value="granite">Granite</option>
+                        <option value="papita">Papita</option>
+                        <option value="stripes">Stripes</option>
+                        <option value="acidEtched">Acid Etched</option>
+                        <option value="artisticPrint">Artistic Print</option>
+                        <option value="customStripes">Custom Stripes</option>
+                        <option value="galina">Galina</option>
+                        <option value="antiSunGrey">Anti-Sun Grey</option>
+                        <option value="antiSunBronze">Anti-Sun Bronze</option>
+                    </select>
+                </div>
+
+                <div class="mb-6">
+                    <label for="glassThickness" class="block text-sm font-medium text-gray-700 mb-1">Glass Thickness</label>
+                    <select id="glassThickness" class="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm bg-white focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out">
+                        <option value="6mm">6 mm</option>
+                        <option value="8mm">8 mm (Recommended)</option>
+                        <option value="10mm">10 mm</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="hardwareFinish" class="block text-sm font-medium text-gray-700 mb-1">Hardware Finish (Profile Color)</label>
+                    <select id="hardwareFinish" class="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm bg-white focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out">
+                        <option value="nickel">Nickel</option>
+                        <option value="black">Black</option>
+                        <option value="white">White</option>
+                        <option value="graphite">Graphite</option>
+                        <option value="roseGold">Rose Gold</option>
+                        <option value="matteGold">Matte Gold</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-8 p-6 bg-green-50 rounded-lg border border-green-200 shadow-sm">
+            <h2 class="text-2xl font-semibold text-green-700 mb-4">Optional Add-ons</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div class="flex items-center">
+                    <input type="checkbox" id="towelHandle" class="h-5 w-5 text-green-600 border-gray-300 rounded focus:ring-green-500">
+                    <label for="towelHandle" class="ml-3 text-base text-gray-700">Towel Handle</label>
+                </div>
+                <div class="flex items-center">
+                    <input type="checkbox" id="nanoCoating" class="h-5 w-5 text-green-600 border-gray-300 rounded focus:ring-green-500">
+                    <label for="nanoCoating" class="ml-3 text-base text-gray-700">Nano Coating</label>
+                </div>
+                <div class="flex items-center">
+                    <input type="checkbox" id="customNotches" class="h-5 w-5 text-green-600 border-gray-300 rounded focus:ring-green-500">
+                    <label for="customNotches" class="ml-3 text-base text-gray-700">Custom Notches</label>
+                </div>
+                <div class="flex items-center">
+                    <input type="checkbox" id="wallReinforcements" class="h-5 w-5 text-green-600 border-gray-300 rounded focus:ring-green-500">
+                    <label for="wallReinforcements" class="ml-3 text-base text-gray-700">Wall Reinforcements</label>
+                </div>
+                <div class="flex items-center">
+                    <input type="checkbox" id="additionalSeals" class="h-5 w-5 text-green-600 border-gray-300 rounded focus:ring-green-500">
+                    <label for="additionalSeals" class="ml-3 text-base text-gray-700">Additional Seals</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-8 p-6 bg-purple-50 rounded-lg border border-purple-200 shadow-sm text-center">
+            <h2 class="text-2xl font-semibold text-purple-700 mb-4">Shower Preview</h2>
+            <canvas id="showerCanvas" class="w-full h-64 sm:h-80 md:h-96"></canvas>
+            <p class="text-sm text-gray-500 mt-2">A simplified visual representation of the shower glass, dynamically drawn based on your selections.</p>
+        </div>
+
+        <div class="p-6 bg-indigo-50 rounded-lg border border-indigo-200 shadow-sm">
+            <h2 class="text-2xl font-semibold text-indigo-700 mb-4">Price Quote</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-lg text-gray-800">
+                <p><strong>Total Area:</strong> <span id="totalArea">0.00</span> m²</p>
+                <p><strong>Base Price (Glass & Thickness):</strong> $<span id="basePrice">0.00</span></p>
+                <p><strong>Hardware Cost:</strong> $<span id="hardwareCost">0.00</span></p>
+                <p><strong>Add-ons Cost:</strong> $<span id="addonsCost">0.00</span></p>
+                <p class="col-span-full text-2xl font-bold text-blue-800 mt-4">
+                    Final Price: $<span id="finalPrice">0.00</span>
+                </p>
+            </div>
+        </div>
+
+        <div class="mt-8 flex flex-col sm:flex-row justify-center gap-4">
+            <button id="downloadPdfBtn" class="flex-1 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-150 ease-in-out">
+                Download Proforma
+            </button>
+            <button id="whatsappBtn" class="flex-1 px-6 py-3 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus->ring-green-500 focus:ring-offset-2 transition duration-150 ease-in-out">
+                Send via WhatsApp
+            </button>
+            <button id="emailBtn" class="flex-1 px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg shadow-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition duration-150 ease-in-out">
+                Send via Email
+            </button>
+        </div>
+
+        <div id="messageBox" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center hidden">
+            <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full text-center">
+                <p id="messageText" class="text-lg font-semibold text-gray-800 mb-4"></p>
+                <button id="messageBoxClose" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">OK</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Function to display custom message box instead of alert()
+        function showMessageBox(message) {
+            document.getElementById('messageText').innerText = message;
+            document.getElementById('messageBox').classList.remove('hidden');
+        }
+
+        // Close message box
+        document.getElementById('messageBoxClose').addEventListener('click', function() {
+            document.getElementById('messageBox').classList.add('hidden');
+        });
+
+        // Pricing Data
+        const PRICING = {
+            glassType: {
+                clear: 50,
+                granite: 60,
+                papita: 65,
+                stripes: 70,
+                acidEtched: 75,
+                artisticPrint: 80,
+                customStripes: 85,
+                galina: 90,
+                antiSunGrey: 95,
+                antiSunBronze: 100
+            },
+            glassThicknessMultiplier: {
+                '6mm': 1.0,
+                '8mm': 1.2,
+                '10mm': 1.5
+            },
+            hardwareFinish: {
+                nickel: 0,
+                black: 50,
+                white: 40,
+                graphite: 60,
+                roseGold: 70,
+                matteGold: 80
+            },
+            addOns: {
+                towelHandle: 30,
+                nanoCoating: 45,
+                customNotches: 25,
+                wallReinforcements: 35,
+                additionalSeals: 20
+            },
+            profitMargin: 0.30 // 30%
+        };
+
+        // Get DOM elements
+        const heightInput = document.getElementById('height');
+        const widthInput = document.getElementById('width');
+        const heightUnitSelect = document.getElementById('heightUnit');
+        const widthUnitSelect = document.getElementById('widthUnit');
+        const showerTypeSelect = document.getElementById('showerType');
+        const showerModelSelect = document.getElementById('showerModel');
+        const glassTypeSelect = document.getElementById('glassType');
+        const glassThicknessSelect = document.getElementById('glassThickness');
+        const hardwareFinishSelect = document.getElementById('hardwareFinish');
+
+        const showerCanvas = document.getElementById('showerCanvas'); // Get the canvas element
+        const ctx = showerCanvas.getContext('2d'); // Get 2D rendering context
+
+        const addOnCheckboxes = {
+            towelHandle: document.getElementById('towelHandle'),
+            nanoCoating: document.getElementById('nanoCoating'),
+            customNotches: document.getElementById('customNotches'),
+            wallReinforcements: document.getElementById('wallReinforcements'),
+            additionalSeals: document.getElementById('additionalSeals')
+        };
+
+        const totalAreaSpan = document.getElementById('totalArea');
+        const basePriceSpan = document.getElementById('basePrice');
+        const hardwareCostSpan = document.getElementById('hardwareCost');
+        const addonsCostSpan = document.getElementById('addonsCost');
+        const finalPriceSpan = document.getElementById('finalPrice');
+
+        const customerNameInput = document.getElementById('customerName');
+        const customerCityInput = document.getElementById('customerCity');
+        const customerPhoneInput = document.getElementById('customerPhone');
+        const phoneErrorMsg = document.getElementById('phoneError');
+
+        // Function to validate the phone number
+        function validatePhoneNumber() {
+            const phoneNumber = customerPhoneInput.value.replace(/\s/g, ''); // Remove spaces for validation
+
+            // Kenyan phone number regex:
+            // Starts with '+' (optional) followed by 254
+            // Then usually 7 or 1, followed by 8 digits.
+            // Example: +2547XXXXXXXX or 2547XXXXXXXX
+            const kenyanPhoneRegex = /^\+?254[71]\d{8}$/;
+
+            if (phoneNumber === '') {
+                customerPhoneInput.classList.remove('input-error');
+                phoneErrorMsg.classList.add('hidden');
+                return true; // Allow empty phone number if not mandatory, or add 'required' if it is.
+            } else if (!kenyanPhoneRegex.test(phoneNumber)) {
+                customerPhoneInput.classList.add('input-error');
+                phoneErrorMsg.classList.remove('hidden');
+                return false;
+            } else {
+                customerPhoneInput.classList.remove('input-error');
+                phoneErrorMsg.classList.add('hidden');
+                return true;
+            }
+        }
+
+        // Function to calculate the price
+        function calculatePrice() {
+            let height = parseFloat(heightInput.value);
+            let width = parseFloat(widthInput.value);
+
+            // Convert dimensions to meters if in cm
+            if (heightUnitSelect.value === 'cm') {
+                height /= 100;
+            }
+            if (widthUnitSelect.value === 'cm') {
+                width /= 100;
+            }
+
+            // Validate inputs
+            if (isNaN(height) || isNaN(width) || height <= 0 || width <= 0) {
+                totalAreaSpan.textContent = '0.00';
+                basePriceSpan.textContent = '0.00';
+                hardwareCostSpan.textContent = '0.00';
+                addonsCostSpan.textContent = '0.00';
+                finalPriceSpan.textContent = '0.00';
+                drawShowerPreview(); // Draw default empty preview
+                return; // Exit if inputs are invalid
+            }
+
+            const totalArea = (height * width).toFixed(2);
+            totalAreaSpan.textContent = totalArea;
+
+            // Calculate base price based on glass type and thickness
+            const selectedGlassType = glassTypeSelect.value;
+            const selectedGlassThickness = glassThicknessSelect.value;
+
+            const glassPricePerSqMeter = PRICING.glassType[selectedGlassType] || 0;
+            const thicknessMultiplier = PRICING.glassThicknessMultiplier[selectedGlassThickness] || 1.0;
+
+            const basePrice = (totalArea * glassPricePerSqMeter * thicknessMultiplier).toFixed(2);
+            basePriceSpan.textContent = basePrice;
+
+            // Calculate hardware cost
+            const selectedHardwareFinish = hardwareFinishSelect.value;
+            const hardwareCost = (PRICING.hardwareFinish[selectedHardwareFinish] || 0).toFixed(2);
+            hardwareCostSpan.textContent = hardwareCost;
+
+            // Calculate add-ons cost
+            let addonsTotal = 0;
+            for (const addOn in addOnCheckboxes) {
+                if (addOnCheckboxes[addOn].checked) {
+                    addonsTotal += PRICING.addOns[addOn] || 0;
+                }
+            }
+            addonsCostSpan.textContent = addonsTotal.toFixed(2);
+
+            // Calculate subtotal and final price with profit margin
+            const subtotal = parseFloat(basePrice) + parseFloat(hardwareCost) + addonsTotal;
+            const profit = subtotal * PRICING.profitMargin;
+            const finalPrice = (subtotal + profit).toFixed(2);
+            finalPriceSpan.textContent = finalPrice;
+
+            drawShowerPreview(); // Update image after calculation
+        }
+
+        // Function to draw the shower preview on canvas
+        function drawShowerPreview() {
+            // Adjust canvas resolution for better quality, but scale to fit container
+            const containerWidth = showerCanvas.parentElement.offsetWidth;
+            const aspectRatio = 600 / 400; // Desired aspect ratio (width / height)
+            showerCanvas.width = containerWidth;
+            showerCanvas.height = containerWidth / aspectRatio;
+
+            ctx.clearRect(0, 0, showerCanvas.width, showerCanvas.height); // Clear previous drawing
+
+            const selectedShowerType = showerTypeSelect.value;
+            const selectedGlassType = glassTypeSelect.value;
+            const selectedHardwareFinish = hardwareFinishSelect.value;
+
+            const glassColorMap = {
+                clear: 'rgba(173, 216, 230, 0.6)', // Light blue, semi-transparent
+                granite: 'rgba(150, 150, 150, 0.7)', // Grey, slightly opaque
+                papita: 'rgba(200, 200, 200, 0.6)', // Lighter grey, semi-transparent
+                stripes: 'rgba(173, 216, 230, 0.6)', // Base clear, will add stripes
+                acidEtched: 'rgba(220, 220, 220, 0.8)', // Very light grey, more opaque
+                artisticPrint: 'rgba(173, 216, 230, 0.6)', // Base clear, implies print
+                customStripes: 'rgba(173, 216, 230, 0.6)', // Base clear, implies custom stripes
+                galina: 'rgba(180, 180, 180, 0.7)', // Medium grey
+                antiSunGrey: 'rgba(100, 100, 100, 0.7)', // Darker grey
+                antiSunBronze: 'rgba(139, 69, 19, 0.7)' // Brownish
+            };
+
+            const hardwareColorMap = {
+                nickel: '#A9A9A9', // DarkGray
+                black: '#000000',
+                white: '#FFFFFF',
+                graphite: '#36454F', // Charcoal
+                roseGold: '#B76E79', // Rose Gold
+                matteGold: '#D4AF37' // Gold
+            };
+
+            const glassFillColor = glassColorMap[selectedGlassType] || glassColorMap.clear;
+            const hardwareStrokeColor = hardwareColorMap[selectedHardwareFinish] || hardwareColorMap.nickel;
+
+            const padding = 20;
+            const glassWidth = showerCanvas.width - 2 * padding;
+            const glassHeight = showerCanvas.height - 2 * padding;
+            const glassX = padding;
+            const glassY = padding;
+
+            ctx.lineWidth = 3; // Hardware thickness
+            ctx.strokeStyle = hardwareStrokeColor;
+
+            // Draw glass based on shower type
+            ctx.fillStyle = glassFillColor;
+            ctx.beginPath();
+
+            switch (selectedShowerType) {
+                case 'frontal':
+                    // Single large glass panel
+                    ctx.rect(glassX, glassY, glassWidth, glassHeight);
+                    ctx.fill();
+                    ctx.stroke();
+
+                    // Draw top and bottom hardware
+                    ctx.beginPath();
+                    ctx.moveTo(glassX, glassY);
+                    ctx.lineTo(glassX + glassWidth, glassY);
+                    ctx.moveTo(glassX, glassY + glassHeight);
+                    ctx.lineTo(glassX + glassWidth, glassY + glassHeight);
+                    ctx.stroke();
+                    break;
+                case 'corner':
+                    // Two glass panels meeting at a corner
+                    const cornerOffset = glassWidth * 0.5; // Example: half width for each panel
+                    ctx.rect(glassX, glassY, cornerOffset, glassHeight); // First panel
+                    ctx.rect(glassX + cornerOffset, glassY, glassWidth - cornerOffset, glassHeight); // Second panel
+                    ctx.fill();
+                    ctx.stroke();
+
+                    // Draw corner hardware
+                    ctx.beginPath();
+                    ctx.moveTo(glassX, glassY);
+                    ctx.lineTo(glassX + glassWidth, glassY); // Top horizontal
+                    ctx.moveTo(glassX, glassY + glassHeight);
+                    ctx.lineTo(glassX + glassWidth, glassY + glassHeight); // Bottom horizontal
+                    ctx.moveTo(glassX + cornerOffset, glassY);
+                    ctx.lineTo(glassX + cornerOffset, glassY + glassHeight); // Vertical corner
+                    ctx.stroke();
+                    break;
+                case 'sliding':
+                    // Two overlapping panels
+                    const panelWidth = glassWidth * 0.6; // Each panel is 60% of total width, allowing overlap
+                    const overlap = glassWidth * 0.2;
+
+                    // Panel 1 (left)
+                    ctx.rect(glassX, glassY, panelWidth, glassHeight);
+                    ctx.fill();
+                    ctx.stroke();
+
+                    // Panel 2 (right, overlapping)
+                    ctx.rect(glassX + glassWidth - panelWidth, glassY, panelWidth, glassHeight);
+                    ctx.fill();
+                    ctx.stroke();
+
+                    // Draw top and bottom tracks
+                    ctx.beginPath();
+                    ctx.moveTo(glassX, glassY);
+                    ctx.lineTo(glassX + glassWidth, glassY);
+                    ctx.moveTo(glassX, glassY + glassHeight);
+                    ctx.lineTo(glassX + glassWidth, glassY + glassHeight);
+                    ctx.stroke();
+                    break;
+                case 'bathtubPartial':
+                    // Half screen over a bathtub
+                    const halfHeight = glassHeight * 0.7; // Example: 70% height
+                    ctx.rect(glassX, glassY + (glassHeight - halfHeight), glassWidth, halfHeight);
+                    ctx.fill();
+                    ctx.stroke();
+
+                    // Draw top hardware
+                    ctx.beginPath();
+                    ctx.moveTo(glassX, glassY + (glassHeight - halfHeight));
+                    ctx.lineTo(glassX + glassWidth, glassY + (glassHeight - halfHeight));
+                    ctx.stroke();
+                    break;
+                case 'bathtubFull':
+                    // Full screen over a bathtub
+                    ctx.rect(glassX, glassY, glassWidth, glassHeight);
+                    ctx.fill();
+                    ctx.stroke();
+
+                    // Draw top hardware
+                    ctx.beginPath();
+                    ctx.moveTo(glassX, glassY);
+                    ctx.lineTo(glassX + glassWidth, glassY);
+                    ctx.stroke();
+                    break;
+                case 'cnc':
+                    // Custom CNC cut - draw a more abstract shape
+                    ctx.moveTo(glassX, glassY + glassHeight * 0.2);
+                    ctx.lineTo(glassX + glassWidth * 0.8, glassY);
+                    ctx.lineTo(glassX + glassWidth, glassY + glassHeight * 0.8);
+                    ctx.lineTo(glassX + glassWidth * 0.2, glassY + glassHeight);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+                    break;
+                default:
+                    // Default fallback: simple rectangle
+                    ctx.rect(glassX, glassY, glassWidth, glassHeight);
+                    ctx.fill();
+                    ctx.stroke();
+                    break;
+            }
+
+            // Add simple patterns for specific glass types
+            if (selectedGlassType === 'stripes' || selectedGlassType === 'customStripes') {
+                ctx.strokeStyle = 'rgba(0,0,0,0.2)'; // Darker stripes
+                ctx.lineWidth = 1;
+                for (let i = 0; i < glassWidth; i += 15) {
+                    ctx.beginPath();
+                    ctx.moveTo(glassX + i, glassY);
+                    ctx.lineTo(glassX + i, glassY + glassHeight);
+                    ctx.stroke();
+                }
+            } else if (selectedGlassType === 'acidEtched') {
+                // Simulate frosted effect with a lighter overlay
+                ctx.fillStyle = 'rgba(255,255,255,0.3)';
+                ctx.fillRect(glassX, glassY, glassWidth, glassHeight);
+            }
+            // You can add more complex patterns for granite, papita, artistic print etc.
+            // This would involve more advanced canvas drawing or loading small pattern images.
+        }
+
+        // Add event listeners to all relevant input fields and dropdowns
+        heightInput.addEventListener('input', calculatePrice);
+        widthInput.addEventListener('input', calculatePrice);
+        heightUnitSelect.addEventListener('change', calculatePrice);
+        widthUnitSelect.addEventListener('change', calculatePrice);
+        showerTypeSelect.addEventListener('change', calculatePrice);
+        showerTypeSelect.addEventListener('change', drawShowerPreview); // Call draw function
+        showerModelSelect.addEventListener('change', calculatePrice);
+        glassTypeSelect.addEventListener('change', calculatePrice);
+        glassTypeSelect.addEventListener('change', drawShowerPreview); // Call draw function
+        glassThicknessSelect.addEventListener('change', calculatePrice);
+        hardwareFinishSelect.addEventListener('change', calculatePrice);
+        hardwareFinishSelect.addEventListener('change', drawShowerPreview); // Call draw function
+
+        for (const addOn in addOnCheckboxes) {
+            addOnCheckboxes[addOn].addEventListener('change', calculatePrice);
+        }
+
+        // Add event listeners for phone number validation
+        customerPhoneInput.addEventListener('input', validatePhoneNumber);
+        customerPhoneInput.addEventListener('blur', validatePhoneNumber); // Validate when user leaves the field
+
+        // Handle canvas resizing
+        window.addEventListener('resize', drawShowerPreview);
+
+        // Initial calculation and image update on page load
+        window.onload = function() {
+            calculatePrice();
+            drawShowerPreview();
+            validatePhoneNumber(); // Validate phone on load
+        };
+
+
+        // --- PDF Generation ---
+        document.getElementById('downloadPdfBtn').addEventListener('click', function() {
+            if (!validatePhoneNumber()) {
+                showMessageBox('Please correct the phone number before downloading the proforma.');
+                return; // Stop execution if validation fails
+            }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            const customerName = customerNameInput.value || 'N/A';
+            const customerCity = customerCityInput.value || 'N/A';
+            const customerPhone = customerPhoneInput.value || 'N/A';
+
+            const height = heightInput.value;
+            const width = widthInput.value;
+            const heightUnit = heightUnitSelect.value;
+            const widthUnit = widthUnitSelect.value;
+
+            const showerType = showerTypeSelect.options[showerTypeSelect.selectedIndex].text;
+            const showerModel = showerModelSelect.options[showerModelSelect.selectedIndex].text;
+            const glassType = glassTypeSelect.options[glassTypeSelect.selectedIndex].text;
+            const glassThickness = glassThicknessSelect.options[glassThicknessSelect.selectedIndex].text;
+            const hardwareFinish = hardwareFinishSelect.options[hardwareFinishSelect.selectedIndex].text;
+
+            let addOnsList = [];
+            for (const addOn in addOnCheckboxes) {
+                if (addOnCheckboxes[addOn].checked) {
+                    addOnsList.push(addOnCheckboxes[addOn].nextElementSibling.textContent);
+                }
+            }
+            const addOnsText = addOnsList.length > 0 ? addOnsList.join(', ') : 'None';
+
+            const totalArea = totalAreaSpan.textContent;
+            const basePrice = basePriceSpan.textContent;
+            const hardwareCost = hardwareCostSpan.textContent;
+            const addonsCost = addonsCostSpan.textContent;
+            const finalPrice = finalPriceSpan.textContent;
+
+            let yPos = 20;
+            const lineHeight = 7;
+
+            doc.setFontSize(22);
+            doc.text("Shower Glass Price Proforma", 105, yPos, { align: "center" });
+            yPos += lineHeight * 2;
+
+            doc.setFontSize(14);
+            doc.text("Customer Details:", 20, yPos);
+            yPos += lineHeight;
+            doc.setFontSize(12);
+            doc.text(`Name: ${customerName}`, 20, yPos);
+            yPos += lineHeight;
+            doc.text(`City: ${customerCity}`, 20, yPos);
+            yPos += lineHeight;
+            doc.text(`Phone: ${customerPhone}`, 20, yPos);
+            yPos += lineHeight * 2;
+
+            doc.setFontSize(14);
+            doc.text("Enclosure Details:", 20, yPos);
+            yPos += lineHeight;
+            doc.setFontSize(12);
+            doc.text(`Dimensions: ${height} ${heightUnit} x ${width} ${widthUnit}`, 20, yPos);
+            yPos += lineHeight;
+            doc.text(`Shower Type: ${showerType}`, 20, yPos);
+            yPos += lineHeight;
+            doc.text(`Model: ${showerModel}`, 20, yPos);
+            yPos += lineHeight;
+            doc.text(`Glass Type: ${glassType}`, 20, yPos);
+            yPos += lineHeight;
+            doc.text(`Glass Thickness: ${glassThickness}`, 20, yPos);
+            yPos += lineHeight;
+            doc.text(`Hardware Finish: ${hardwareFinish}`, 20, yPos);
+            yPos += lineHeight;
+            doc.text(`Add-ons: ${addOnsText}`, 20, yPos);
+            yPos += lineHeight * 2;
+
+            doc.setFontSize(14);
+            doc.text("Price Breakdown:", 20, yPos);
+            yPos += lineHeight;
+            doc.setFontSize(12);
+            doc.text(`Total Area: ${totalArea} m²`, 20, yPos);
+            yPos += lineHeight;
+            doc.text(`Base Price (Glass & Thickness): $${basePrice}`, 20, yPos);
+            yPos += lineHeight;
+            doc.text(`Hardware Cost: $${hardwareCost}`, 20, yPos);
+            yPos += lineHeight;
+            doc.text(`Add-ons Cost: $${addonsCost}`, 20, yPos);
+            yPos += lineHeight * 2;
+
+            doc.setFontSize(16);
+            doc.text(`Final Price: $${finalPrice}`, 20, yPos);
+
+            doc.save(`Shower_Glass_Proforma_${customerName.replace(/\s/g, '_')}.pdf`);
+        });
+
+        // --- WhatsApp Share ---
+        document.getElementById('whatsappBtn').addEventListener('click', function() {
+            if (!validatePhoneNumber()) {
+                showMessageBox('Please correct the phone number before sending via WhatsApp.');
+                return;
+            }
+
+            const customerName = customerNameInput.value || 'Customer';
+            const customerPhone = customerPhoneInput.value || 'N/A';
+            const finalPrice = finalPriceSpan.textContent;
+            const totalArea = totalAreaSpan.textContent;
+            const glassType = glassTypeSelect.options[glassTypeSelect.selectedIndex].text;
+            const hardwareFinish = hardwareFinishSelect.options[hardwareFinishSelect.selectedIndex].text;
+
+            const message = `Hello ${customerName},\n\nHere is your shower glass quote:\n` +
+                            `Total Area: ${totalArea} m²\n` +
+                            `Glass Type: ${glassType}\n` +
+                            `Hardware Finish: ${hardwareFinish}\n` +
+                            `Estimated Final Price: $${finalPrice}\n\n` +
+                            `For more details, please refer to the downloaded proforma.`;
+
+            // For WhatsApp, it's best to use the full number without spaces/dashes if possible
+            // For Kenya, it expects 254XXXXXXXXX or +254XXXXXXXXX
+            const cleanedPhone = customerPhone.replace(/\D/g, ''); // Remove all non-digits
+            let targetPhone = cleanedPhone;
+            if (cleanedPhone.startsWith('254') && cleanedPhone.length === 12) {
+                 // Already in 254... format
+            } else if (cleanedPhone.startsWith('0') && cleanedPhone.length === 10) {
+                 targetPhone = '254' + cleanedPhone.substring(1); // Convert 07... to 2547...
+            } else if (cleanedPhone.length === 9 && (cleanedPhone.startsWith('7') || cleanedPhone.startsWith('1'))) {
+                targetPhone = '254' + cleanedPhone; // Assume 7XX XXX XXX to be 2547XXXXXXXX
+            }
+
+
+            const whatsappUrl = `https://wa.me/${targetPhone}?text=${encodeURIComponent(message)}`;
+            window.open(whatsappUrl, '_blank');
+        });
+
+        // --- Email Share (Client-side, opens mail client) ---
+        document.getElementById('emailBtn').addEventListener('click', function() {
+            if (!validatePhoneNumber()) {
+                showMessageBox('Please correct the phone number before sending via Email.');
+                return;
+            }
+
+            const customerName = customerNameInput.value || 'Customer';
+            const customerEmail = ''; // User needs to manually enter in mail client or you can add an email input field
+            const finalPrice = finalPriceSpan.textContent;
+            const totalArea = totalAreaSpan.textContent;
+            const glassType = glassTypeSelect.options[glassTypeSelect.selectedIndex].text;
+            const hardwareFinish = hardwareFinishSelect.options[hardwareFinishSelect.selectedIndex].text;
+
+            const subject = `Shower Glass Quote for ${customerName}`;
+            const body = `Dear ${customerName},\n\n` +
+                         `Thank you for using our Shower Glass Price Calculator. Here is a summary of your quote:\n\n` +
+                         `Total Area: ${totalArea} m²\n` +
+                         `Glass Type: ${glassType}\n` +
+                         `Hardware Finish: ${hardwareFinish}\n` +
+                         `Estimated Final Price: $${finalPrice}\n\n` +
+                         `For a detailed breakdown, please see the attached proforma (if downloaded) or contact us directly.\n\n` +
+                         `Best regards,\nYour Shower Glass Team`;
+
+            const mailtoUrl = `mailto:${customerEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            window.open(mailtoUrl, '_blank');
+        });
+
+        // IMPORTANT NOTE ON EMAIL FUNCTIONALITY:
+        // Sending emails directly from a client-side HTML/JavaScript application is not possible due to browser security restrictions.
+        // The "Send via Email" button above will open the user's default email client with a pre-filled subject and body.
+        // To send emails automatically to your store or to the customer's email address without manual intervention,
+        // you would need a backend server (e.g., Node.js, Python, PHP) to handle the email sending process securely.
+        // This backend would receive the quote details from the frontend and then use a mail service (like Nodemailer, SendGrid, Mailgun)
+        // to dispatch the emails.
+    </script>
+</body>
+</html>
